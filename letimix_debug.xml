@@ -1,0 +1,889 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<SKIN author="Ilya Orlov" name="Debugging skin" font_size_mode="character" refresh_priority="idle" background_color="#BBBBBB">
+
+<!-- include defines and mappings -->
+<INCLUDE_ONCE file="LetiMix/common.inc"/>
+
+<!-- which blocks to show -->
+<VAR id="SHOW_PRE_DEFINED_VARS"  	 value="1" />
+<VAR id="SHOW_BUILD_TIME_VARS"  	 value="1" />
+<VAR id="SHOW_MAPPING_VARS"  		 value="1" />
+<VAR id="SHOW_BASIC_PARAMS" 		 value="1" />
+<VAR id="SHOW_INPUT_PARAMS" 		 value="1" />`
+<VAR id="SHOW_OUTPUT_PARAMS" 		 value="1" />
+<VAR id="SHOW_PRIVATE_OUTPUT_PARAMS" value="1" />
+<VAR id="SHOW_INPUT_STRINGS" 		 value="1" />
+<VAR id="SHOW_OUTPUT_STRINGS" 		 value="1" />
+<VAR id="SHOW_ACTIONS" 		 		 value="1" />
+<VAR id="SHOW_ACTION_TYPES" 		 value="1" />
+
+<!-- include default Plug-n-Script graphics (NOT REQUIRED) -->
+  <INCLUDE_ONCE file="$PLUGIN_DATA_PATH$/Skins/Modern-Theme/theme.inc"/>
+  <INCLUDE_ONCE file="$PLUGIN_DATA_PATH$/Skins/Controls/Knobs/knobs.inc"/>
+  <INCLUDE_ONCE file="$PLUGIN_DATA_PATH$/Skins/Controls/Groups/groups.inc"/>
+  <INCLUDE_ONCE file="$PLUGIN_DATA_PATH$/Skins/Controls/Meters/meters.inc"/>
+  <INCLUDE_ONCE file="$PLUGIN_DATA_PATH$/Skins/Controls/Other/other.inc"/>
+
+<!-- update max count -->
+<TEMPLATE id="UPDATE_MAX_COUNT" max_in_block="8">
+	<VAR id="ITEMS_LEFT" formula="$MAX_N$ - $P_N$" />
+	<VAR id="MAX_COUNT" formula="($ITEMS_LEFT$ >= $max_in_block$)*$max_in_block$ + ($ITEMS_LEFT$ &lt; $max_in_block$)*$ITEMS_LEFT$" />
+</TEMPLATE>
+
+<VAR id="SP_N" value="0" />  <!-- for auto-incrementing counters -->
+<VAR id="BASIC_WIDTH" value="580" /> <!-- basic column width -->
+
+<!-- TEMPLATE FOR CHECKBOX TO SHOW/HIDE BLOCK -->
+<TEMPLATE id="TPL_SHOWHIDE" name="__" bid="__" expand="0">
+	<ROW v_align="top" v_margin="4" h_margin="14" width="100%" internal_h_align="left">
+		<PARAM id="show_$bid$" min="0" max="1" default="$expand$" exposed="true" />
+		<SYSTEM_PARAM_CHECKBOX param_id="show_$bid$" />
+		<TEXT value=" $name$" h_align="left" font_size="14">
+			<INVISIBLE_PARAM_BUTTON positions_count="2" param_id="show_$bid$" width="100%" height="100%" cursor="system::hand" />
+		</TEXT>
+		<AT event_id="window.loaded.value_changed;show_$bid$.value_changed" condition_formula="window.loaded==1" script="$bid$.display = show_$bid$" requires="$bid$.display" async="true" />
+	</ROW>
+</TEMPLATE>
+<!-- TEMPLATE FOR SVGs -->
+<TEMPLATE id="DBG_SVG_BG" color="#EEEEEE" bordercolor="#000033" opacity="1">
+	<svg width="100%" height="100%" viewBox="0 0 500 500" opacity="$opacity$"><rect x="0" y="0" xrx="5" xry="5" width="500" height="500" stroke="$bordercolor$" opacity="0.5" stroke-width="1" fill="$color$" /></svg>
+</TEMPLATE>
+<TEMPLATE id="SVG_UNDERLINE">
+	<svg width="100%" height="100%" viewBox='0 0 100 100'><path d="M0 100 H 98" stroke='#555555' stroke-width='1' fill='none' opacity="0.2" /></svg>
+</TEMPLATE>
+<!-- TEMPLATE FOR MY_COLUMN -->
+<TEMPLATE id="MY_COLUMN" w="$BASIC_WIDTH$" name="__" bid="__" expand="0">
+	<LAYER_STACK min_width="$w$">
+		<DBG_SVG_BG />
+		<TPL_SHOWHIDE name="$name$" bid="$bid$" expand="$expand$"/>
+		<COLUMN v_margin="18" v_offset="9" h_margin="18" width="100%" id="$bid$" display="false" h_offset="8">
+			<TEMPLATE_INNER_CONTENT/>
+		</COLUMN>
+	</LAYER_STACK>
+</TEMPLATE>
+
+<!-- ACTUAL MARKUP START -->
+<!-- Remember current skin filename (for top menu) -->
+<VAR id="_SKIN_FILENAME_" value="$_FILE_$" />
+<!-- Include top menu -->
+<INCLUDE_ONCE file="LetiMix/head-toolbar.inc" />
+
+<ROW min_height="20" min_width="300" internal_v_align="top">
+
+	<!-- DEBUG INFO COLUMN -->
+	<COLUMN id="debug_cell" min_width="300" min_height="20" v_margin="4" h_margin="4" v_align="top">
+
+	<!-- TEMPLATE FOR BUILT IN VARS -->
+	<TEMPLATE id="BIV" vid="" w="250">
+		<LAYER_STACK width="100%">
+			<ROW width="100%" internal_h_align="left" v_margin="2">
+				<STRING id="sp$SP_N$" default="$vid$" />
+				<TEXT_FIELD string_id="sp$SP_N$" width="$w$" text_h_align="left" />
+				<TEXT value="$$vid$$" font_weight="bold" h_offset="4" />
+			</ROW>
+			<SVG_UNDERLINE />
+		</LAYER_STACK>
+		<VAR id="SP_N" formula="$SP_N$+1" /> 
+	</TEMPLATE>
+
+	<!-- TEMPLATE FOR LONG STRINGS BUILD IN VARS -->
+	<TEMPLATE id="BIV2" vid="">
+		<LAYER_STACK width="100%">
+			<COLUMN width="100%" internal_h_align="left" v_margin="2">
+				<STRING id="sp$SP_N$" default="$vid$" />
+				<STRING id="spt$SP_N$" default="$$vid$$" />
+				<TEXT_FIELD string_id="sp$SP_N$" width="100%" text_h_align="left" />
+				<TEXT_FIELD width="100%" string_id="spt$SP_N$" font_weight="bold" text_h_align="left" />
+			</COLUMN>
+			<SVG_UNDERLINE />
+		</LAYER_STACK>
+		<VAR id="SP_N" formula="$SP_N$+1" /> 
+	</TEMPLATE>
+
+	<!-- TEMPLATE FOR POP-UP MENU TO CHANGE "PAGE" -->
+	<TEMPLATE id="SELECT_PAGE_POPUP" enum="Page1;Page2" qty="2" col_id="some_id">
+		<LAYER_STACK h_align="left" h_offset="-11">
+			<DBG_SVG_BG color="#DDDDFF" />
+			<LAYER_STACK>
+				<ROW h_margin="10" v_margin="4">
+					<PARAM id="pages_to_show_$SP_N$" type="enumeration" min="0" default="0" enum_values="$enum$" exposed="true" />
+					<PARAM_TEXT param_id="pages_to_show_$SP_N$" />
+					<svg width="16" height="16" viewBox="20 20 60 60"><polygon points="51.2,62.7 69,45 33,45" stroke="#777777" fill="777777" /></svg>
+					<VAR id="P_NO" value="0" />
+					<REPEAT count="$qty$" index_name="page_no">
+						<VAR id="P_NO" formula="$P_NO$+1" />
+						<VAR id="X_NEXT" formula="$P_NO$-0.5" />
+						<VAR id="X_PREV" formula="$P_NO$-1.5" />
+						<PARAM_LINK from="pages_to_show_$SP_N$" to="$col_id$_$P_NO$.display" formula="(x > $X_PREV$)*(x &lt; $X_NEXT$)" />
+					</REPEAT>
+				</ROW>
+				<INVISIBLE_PARAM_MENU_BUTTON param_id="pages_to_show_$SP_N$" positions_count="$qty$" width="100%" height="100%" />
+			</LAYER_STACK>
+		</LAYER_STACK>
+		<VAR id="SP_N" formula="$SP_N$+1" /> 
+	</TEMPLATE>
+
+	<IF condition="$SHOW_PRE_DEFINED_VARS$">
+		<MY_COLUMN name="Predefined variables" bid="predef_vars" expand="0">
+			<!-- long string params -->
+			<REPEAT index_list="_SYSTEM_TYPE_;_FILE_;_DIR_;_PROGRAM_FILES_PATH_;_PROGRAM_FILES_PATH_X86_;_PROGRAM_FILES_PATH_X64_;_PROCESSOR_ARCHITECTURE_;_PARAM_MAX_">
+				<BIV2 vid="$index$" />
+			</REPEAT>
+		</MY_COLUMN>
+	</IF>
+
+	<IF condition="$SHOW_BUILD_TIME_VARS$">
+		<MY_COLUMN name="Built-time variables" bid="buildin_vars" expand="0">
+			<SELECT_PAGE_POPUP enum="Number of input-output params;Plugin info, data paths" qty="2" col_id="show_bt_vars" />
+			<COLUMN id="show_bt_vars_1" width="100%">
+				<!-- short values params -->
+				<REPEAT index_list="SCRIPT_EDIT_MODE;SCRIPT_PARAMS_COUNT;SCRIPT_OUT_PARAMS_COUNT;SCRIPT_STRINGS_COUNT;PLUGIN_AUDIO_INPUTS_COUNT;PLUGIN_AUDIO_OUTPUTS_COUNT;PLUGIN_INPUT_PARAMS_COUNT;PLUGIN_INPUT_STRINGS_COUNT;PLUGIN_INPUT_CURVES_COUNT;PLUGIN_INPUT_SURFACES_COUNT;PLUGIN_INPUT_CUSTOM_PROPERTIES_COUNT;PLUGIN_OUTPUT_PARAMS_COUNT;PLUGIN_PRIVATE_OUTPUT_PARAMS_COUNT;PLUGIN_OUTPUT_STRINGS_COUNT;PLUGIN_OUTPUT_CURVES_COUNT;PLUGIN_OUTPUT_SURFACES_COUNT;PLUGIN_OUTPUT_CUSTOM_PROPERTIES_COUNT">
+					<BIV vid="$index$" w="270" />
+				</REPEAT>
+			</COLUMN>
+			<COLUMN id="show_bt_vars_2" width="100%">
+				<!-- long string params -->
+				<REPEAT index_list="PLUGIN_NAME;PLUGIN_VERSION;PLUGIN_COPYRIGHT;PLUGIN_MANUFACTURER;PLUGIN_USER_DOCUMENTS_PATH;PLUGIN_DATA_PATH">
+					<BIV2 vid="$index$" />
+				</REPEAT>
+			</COLUMN>
+		</MY_COLUMN>
+	</IF>
+
+	
+
+	<!-- TEMPLATE FOR MAPPING VARS -->
+	<TEMPLATE id="MAV" vid="" w="190" to="0" from="0" isparam="1">
+		<LAYER_STACK width="100%">
+			<ROW width="100%" internal_h_align="left" v_margin="2" h_align="left">
+				<STRING id="sp$SP_N$" default="$vid$" />
+					<TEXT_FIELD string_id="sp$SP_N$" text_h_align="left" h_align="left" width="$w$">
+						<IF condition="$to$>0">
+							<VAR id="temp" formula="$to$-1+$from$" />
+							<TOOLTIP text="$from$ to $temp$" />
+						</IF>
+					</TEXT_FIELD>
+				<STRING id="$vid$_" default="$$vid$$" />
+				<TEXT_FIELD string_id="$vid$_" font_weight="bold" h_offset="4" width="160" text_h_align="left" />
+				<IF condition="$isparam$>-1">
+					<ROW h_margin="10">
+						<IF condition="$isparam$">
+							<PARAM_TEXT param_id="$$vid$$" />
+						</IF>
+						<IF condition="!$isparam$">
+							<STRING id="$vid$_copy" default="---" />
+							<STRING_LINK from="$$vid$$" to="$vid$_copy" enabled="true" />
+							<TEXT_FIELD string_id="$vid$_copy"  text_h_align="left" width="160">
+								<TOOLTIP string_id="$$vid$$" />
+							</TEXT_FIELD>
+						</IF>
+					</ROW>
+				</IF>
+			</ROW>
+			<SVG_UNDERLINE />
+		</LAYER_STACK>
+		<VAR id="SP_N" formula="$SP_N$+1" /> 
+	</TEMPLATE>
+	<IF condition="$SHOW_MAPPING_VARS$">
+		<MY_COLUMN name="Mapping variables" bid="mapping_vars" expand="0">
+			<SELECT_PAGE_POPUP enum="General variables;Input params;Output params" qty="3" col_id="show_map_vars" />
+			<COLUMN id="show_map_vars_1" width="100%">
+				<MAV vid="HAS_EXTRA_INPUT_PARAMS" isparam="-1" />
+				<MAV vid="bypass" />
+				<IF condition="$HAS_EXTRA_INPUT_PARAMS$">
+					<REPEAT index_list="reload_script;show_levels"><MAV vid="$index$" /></REPEAT>
+				</IF>
+				
+				<MAV vid="input_level1" to="$PLUGIN_AUDIO_INPUTS_COUNT$" from="1" />
+				<MAV vid="input_hold_level1" to="$PLUGIN_AUDIO_INPUTS_COUNT$" from="1" />
+
+				<MAV vid="output_level1" to="$PLUGIN_AUDIO_OUTPUTS_COUNT$" from="1" />
+				<MAV vid="output_hold_level1" to="$PLUGIN_AUDIO_OUTPUTS_COUNT$" from="1" />
+
+				<MAV vid="script_file_type" />
+				<MAV vid="script_status" />
+
+				<MAV vid="script_status_string" isparam="0" />
+				<MAV vid="script_name_string" isparam="0" />
+				<MAV vid="script_description_string" isparam="0" />
+				<MAV vid="script_author_string" isparam="0" />
+				<MAV vid="script_file_path" isparam="0" />
+				<MAV vid="log_file_path" isparam="0" />
+				<MAV vid="script_doc_path" isparam="0" />
+				<MAV vid="script_gui_path" isparam="0" />
+			</COLUMN>
+			<COLUMN id="show_map_vars_2" width="100%">
+				<IF condition="$SCRIPT_PARAMS_COUNT$>0">
+					<MAV vid="script_input0" to="$SCRIPT_PARAMS_COUNT$" />
+					<MAV vid="script_input_param0_min" to="$SCRIPT_PARAMS_COUNT$" />
+					<MAV vid="script_input_param0_max" to="$SCRIPT_PARAMS_COUNT$" />
+					<MAV vid="script_input_param0_default" to="$SCRIPT_PARAMS_COUNT$" />
+					<MAV vid="script_input_param0_steps" to="$SCRIPT_PARAMS_COUNT$" />
+					<MAV vid="script_input_param0_name" to="$SCRIPT_PARAMS_COUNT$" isparam="0" />
+					<MAV vid="script_input_param0_unit" to="$SCRIPT_PARAMS_COUNT$" isparam="0" />
+					<MAV vid="script_input_param0_enum_values" to="$SCRIPT_PARAMS_COUNT$" isparam="0" />
+					<MAV vid="script_input_param0_value_format" to="$SCRIPT_PARAMS_COUNT$" isparam="0" />
+				</IF>
+				<MAV vid="script_input_params_count" />
+				<IF condition="$SCRIPT_STRINGS_COUNT$>0">
+					<MAV vid="script_input_string0" to="$SCRIPT_STRINGS_COUNT$" isparam="0" />
+					<MAV vid="script_input_string0_name" to="$SCRIPT_STRINGS_COUNT$" isparam="0" />
+					<MAV vid="script_input_strings_count" />
+				</IF>
+			</COLUMN>
+			<COLUMN id="show_map_vars_3" width="100%">
+				<IF condition="$SCRIPT_OUT_PARAMS_COUNT$>0">
+					<MAV vid="script_output0" to="$SCRIPT_OUT_PARAMS_COUNT$" />
+					<MAV vid="script_output_param0_min" to="$SCRIPT_OUT_PARAMS_COUNT$" />
+					<MAV vid="script_output_param0_max" to="$SCRIPT_OUT_PARAMS_COUNT$" />
+					<MAV vid="script_output_param0_default" to="$SCRIPT_OUT_PARAMS_COUNT$" />
+					<MAV vid="script_output_param0_name" to="$SCRIPT_OUT_PARAMS_COUNT$" isparam="0" />
+					<MAV vid="script_output_param0_unit" to="$SCRIPT_OUT_PARAMS_COUNT$" isparam="0" />
+					<MAV vid="script_output_param0_enum_values" to="$SCRIPT_OUT_PARAMS_COUNT$" isparam="0" />
+					<MAV vid="script_output_param0_value_format" to="$SCRIPT_OUT_PARAMS_COUNT$" isparam="0" />
+				</IF>
+				<MAV vid="script_output_params_count" />
+			</COLUMN>
+		</MY_COLUMN>
+	</IF>
+
+	<!-- TEMPLATE FOR DSP INPUT PARAMS -->
+	<TEMPLATE id="DIP" vid="" w="250" vf=".0" align="left">
+		<LAYER_STACK width="100%">
+			<ROW width="100%" internal_h_align="left" v_margin="2">
+				<STRING id="sp$SP_N$" default="$vid$" />
+				<TEXT_FIELD string_id="sp$SP_N$" width="$w$" text_h_align="$align$" />
+				<PARAM_TEXT_CONTROL param_id="$vid$" font_weight="bold" h_offset="4" value_format="$vf$" cursor="system::size_v" />
+			</ROW>
+			<SVG_UNDERLINE />
+		</LAYER_STACK>
+		<VAR id="SP_N" formula="$SP_N$+1" /> 
+	</TEMPLATE>
+	<!-- TEMPLATE FOR DSP INPUT PARAMS (ENUMERATED) -->
+	<TEMPLATE id="DIPE" vid="" w="250" vf=".0" align="left" pc="14">
+		<LAYER_STACK width="100%">
+			<ROW width="100%" internal_h_align="left" v_margin="2">
+				<STRING id="sp$SP_N$" default="$vid$" />
+				<TEXT_FIELD string_id="sp$SP_N$" width="$w$" text_h_align="$align$" />
+				<PARAM_TEXT param_id="$vid$" font_weight="bold" h_offset="4" value_format="$vf$">
+					<INVISIBLE_PARAM_MENU_BUTTON param_id="$vid$" width="100%" height="100%" cursor="system::hand" positions_count="$pc$" />
+				</PARAM_TEXT>
+			</ROW>
+			<SVG_UNDERLINE />
+		</LAYER_STACK>
+		<VAR id="SP_N" formula="$SP_N$+1" /> 
+	</TEMPLATE>
+
+	<IF condition="$SHOW_BASIC_PARAMS$">
+		<!-- TEMPLATE FOR BUILT IN PARAMS -->
+		<TEMPLATE id="BIP" vid="" w="250" vf=".0">
+			<LAYER_STACK width="100%">
+				<ROW width="100%" internal_h_align="left" v_margin="2">
+					<STRING id="sp$SP_N$" default="$vid$" />
+					<TEXT_FIELD string_id="sp$SP_N$" width="$w$" text_h_align="left" />
+					<PARAM_TEXT param_id="$vid$" font_weight="bold" h_offset="4" value_format="$vf$" content="{value} {unit}" />
+				</ROW>
+				<SVG_UNDERLINE />
+			</LAYER_STACK>
+			<VAR id="SP_N" formula="$SP_N$+1" /> 
+		</TEMPLATE>
+		<!-- TEMPLATE FOR BUILT IN PARAMS -->
+		<TEMPLATE id="BIPS" vid="" w="250" vf=".0">
+			<LAYER_STACK width="100%">
+				<ROW width="100%" internal_h_align="left" v_margin="2">
+					<STRING id="sp$SP_N$" default="$vid$" />
+					<TEXT_FIELD string_id="sp$SP_N$" width="$w$" text_h_align="left" />
+					<TEXT string_id="$vid$" font_weight="bold" h_offset="6" text_h_align="left" />
+				</ROW>
+				<SVG_UNDERLINE />
+			</LAYER_STACK>
+			<VAR id="SP_N" formula="$SP_N$+1" /> 
+		</TEMPLATE>
+		<MY_COLUMN name="Basic DSP and GUI params" bid="dsp_params_basic" expand="0">
+			<LS width="100%" v_margin="3" v_offset="2" h_offset="-2">
+				<TEXT h_align="left" value="Read-only params:" text_color="#990000"  />
+			</LS>
+			<REPEAT index_list="dsp.sample_rate;dsp.max_block_size;dsp.connected_inputs_count;dsp.connected_outputs_count;dsp.input_busses_count;dsp.output_busses_count;current_preset.modified">
+				<BIP vid="$index$" w="160" vf=".0" />
+			</REPEAT>
+			<BIPS vid="current_preset.name" w="160" vf=".0" />
+			<BIP vid="window.loaded" w="160" vf=".0" />
+			<BIP vid="alive" w="160" vf=".0" />
+			<LS width="100%" v_margin="3" v_offset="2" h_offset="-2">
+				<TEXT h_align="left" value="Editable params:" text_color="#009900" />
+			</LS>
+			<DIP vid="window.opacity" w="160" vf=".0" />
+			<DIPE vid="gui.zoom" w="160" vf=".0" />
+		</MY_COLUMN>
+	</IF>
+
+	<!-- TEMPLATE FOR ALIASED INPUT AND OUTPUT PARAMS -->
+	<TEMPLATE id="DIPA" vid="" oid="" w1="70" w2="120" align="left" op="0">
+		<WIDGET id="wdipa_$vid$" width="100%" opacity="0.5">
+			<LAYER_STACK width="100%">
+				<ROW width="100%" internal_h_align="left" v_margin="2">
+					<STRING id="spo$SP_N$" default="$oid$" />
+					<TEXT_FIELD string_id="spo$SP_N$" width="$w1$" text_h_align="$align$" font_size="10"  />
+					<IF condition="$op$ &lt; 0.5">
+						<PARAM_TEXT_CONTROL param_id="$oid$"  h_offset="4" cursor="system::size_v" width="50" font_size="10"/>
+					</IF>
+					<IF condition="$op$ > 0.5">
+						<PARAM_TEXT param_id="$oid$"  h_offset="4" width="50" font_size="10"/>
+					</IF>
+					<svg width="40" height="12" viewBox="0 -10 60 30" h_offset="10" opacity="0.7"><polygon points="0,8 15,8 15,0 20,10 15,20 15,12 0,12 " stroke="#777777" fill="777777" /></svg>
+					<STRING id="sp$SP_N$" default="$vid$" />
+					<TEXT_FIELD string_id="sp$SP_N$" width="$w2$" text_h_align="$align$" text_color="#000080" font_weight="bold" />
+					<IF condition="$op$ &lt; 0.5">
+						<PARAM_TEXT_CONTROL param_id="$vid$" font_weight="bold" h_offset="4" cursor="system::size_v" width="120">
+							<PARAM_TOOLTIP param_id="$vid$" content="{name}" />
+						</PARAM_TEXT_CONTROL>
+					</IF>
+					<IF condition="$op$ > 0.5">
+						<PARAM_TEXT param_id="$vid$" font_weight="bold" h_offset="4" width="120">
+							<PARAM_TOOLTIP param_id="$vid$" content="{name}" />
+						</PARAM_TEXT>
+					</IF>
+					<PARAM_TEXT param_id="$vid$" content="{name}" opacity="0.8" font_size="10" />
+				</ROW>
+				<SVG_UNDERLINE />
+			</LAYER_STACK>
+		</WIDGET>
+		<IF condition="$op$&lt;1">
+			<PARAM_LINK from="$script_input_params_count$" to="wdipa_$vid$.opacity" formula="0.5+ (x>$P_N$)" enabled="true" />
+		</IF>
+		<IF condition="$op$>0.5">
+			<PARAM_LINK from="$script_output_params_count$" to="wdipa_$vid$.opacity" formula="0.5+ (x>$P_N$)" enabled="true" />
+		</IF>
+		<VAR id="P_N" formula="$P_N$+1" />
+		<VAR id="SP_N" formula="$SP_N$+1" /> 
+		<VAR id="ORIG_N" formula="$ORIG_N$+1" />
+	</TEMPLATE>
+
+	<!-- DSP INPUT PARAMS -->
+	<VAR id="MAX_N" value="$PLUGIN_INPUT_PARAMS_COUNT$" />
+	<IF condition="$SHOW_INPUT_PARAMS$">
+		<MY_COLUMN name="DSP input params ($MAX_N$)" bid="dsp_params_input" expand="0">
+			<SELECT_PAGE_POPUP enum="dsp.input0-$MAX_N$;custom_params0-11;custom_params12-23;custom_params24-35;custom_params36-48" qty="5" col_id="dsp_params" />
+
+			<!-- dsp.input0..56 -->
+			<COLUMN id="dsp_params_1">
+				<VAR id="P_N" value="0" />
+				<VAR id="COLS_COUNT" value="4" />
+				<VAR id="BW_PART" formula="$BASIC_WIDTH$/$COLS_COUNT$.2" />
+				<LS width="100%" v_margin="4">
+					<VAR id="MAX_N_MINUS_1" formula="$MAX_N$-1" />
+					<IF condition="$HAS_EXTRA_INPUT_PARAMS$">
+						<TEXT h_align="left" value="input0: bypass;     input1: reload_script;     input2: show_levels;     3..7 reserved;    8..$MAX_N_MINUS_1$ are custom_params" text_color="#555555" font_size="10" />
+					</IF>
+					<IF condition="(!$HAS_EXTRA_INPUT_PARAMS$)*($SCRIPT_PARAMS_COUNT$>0)">
+						<TEXT h_align="left" value="input0: bypass;     input1..$MAX_N_MINUS_1$ are custom_params" text_color="#555555" />
+					</IF>
+
+				</LS>
+				<ROW h_offset="-6">
+					<REPEAT count="$COLS_COUNT$">
+						<VAR id="MAX_IN_BLOCK" formula="ceil($MAX_N$/$COLS_COUNT$)" />
+						<COLUMN width="$BW_PART$" h_margin="10" v_align="top">
+							<UPDATE_MAX_COUNT max_in_block="$MAX_IN_BLOCK$" />
+							<REPEAT count="$MAX_COUNT$" index_name="ind">
+								<DIP vid="dsp.input$P_N$" w="66" vf=".0" />
+								<VAR id="P_N" formula="$P_N$+1" />
+							</REPEAT>
+						</COLUMN>
+					</REPEAT>
+				</ROW>
+			</COLUMN>
+
+			<!-- custom_param0..48 -->
+			<VAR id="MAX_N" value="$SCRIPT_PARAMS_COUNT$" />
+			<VAR id="P_N" value="0" />
+			<VAR id="C_N" value="2" />
+			<VAR id="ORIG_N" value="1" />
+			<IF condition="$HAS_EXTRA_INPUT_PARAMS$">
+				<VAR id="ORIG_N" value="8" />
+			</IF>
+			<VAR id="MAX_IN_BLOCK" formula="12" />
+			<!-- <VAR id="MAX_COLS" formula="ceil($MAX_N$/$MAX_IN_BLOCK$)" /> -->
+			<VAR id="MAX_COLS" formula="5" />
+			<REPEAT count="$MAX_COLS$" index_name="ind">
+				<UPDATE_MAX_COUNT max_in_block="$MAX_IN_BLOCK$" />
+				<COLUMN id="dsp_params_$C_N$" width="100%">
+					<REPEAT count="$MAX_COUNT$" index_name="ind">
+						<DIPA oid="dsp.input$ORIG_N$" vid="custom_param$P_N$" />
+					</REPEAT>
+				</COLUMN>
+				<VAR id="C_N" formula="$C_N$+1" />
+			</REPEAT>
+		</MY_COLUMN>
+	</IF>
+
+	<!-- TEMPLATE FOR DSP OUTPUT PARAMS -->
+	<TEMPLATE id="DOP" vid="" w="250" vf=".0">
+		<LAYER_STACK width="100%">
+			<ROW width="100%" internal_h_align="left" v_margin="2">
+				<STRING id="sp$SP_N$" default="$vid$" />
+				<TEXT_FIELD string_id="sp$SP_N$" width="$w$" text_h_align="left" />
+				<PARAM_TEXT param_id="$vid$" font_weight="bold" h_offset="4" value_format="$vf$"/>
+			</ROW>
+			<SVG_UNDERLINE />
+		</LAYER_STACK>
+		<VAR id="SP_N" formula="$SP_N$+1" /> 
+	</TEMPLATE>
+
+	<IF condition="$SHOW_OUTPUT_PARAMS$">
+		<VAR id="MAX_N" value="$PLUGIN_OUTPUT_PARAMS_COUNT$" />
+		<MY_COLUMN name="DSP output params ($MAX_N$)" bid="dsp_params_output" expand="0">
+			<SELECT_PAGE_POPUP enum="dsp.output0-$MAX_N$;custom_out_params0-10;custom_out_params11-21;custom_out_params22-31" qty="4" col_id="dsp_out_params" />
+
+			<!-- dsp.output0..32 -->
+			<COLUMN id="dsp_out_params_1">
+				<VAR id="P_N" value="0" />
+				<VAR id="COLS_COUNT" value="3" />
+				<VAR id="MAX_IN_BLOCK" formula="ceil($MAX_N$/$COLS_COUNT$)" />
+				<VAR id="BW_PART" formula="$BASIC_WIDTH$/$COLS_COUNT$.1" />
+				<ROW h_offset="-4">
+					<REPEAT count="$COLS_COUNT$">
+						<COLUMN width="$BW_PART$" h_margin="10" v_align="top">
+							<UPDATE_MAX_COUNT max_in_block="$MAX_IN_BLOCK$" />
+							<REPEAT count="$MAX_COUNT$" index_name="ind">
+								<DOP vid="dsp.output$P_N$" w="76" vf=".0" />
+								<VAR id="P_N" formula="$P_N$+1" />
+							</REPEAT>
+						</COLUMN>
+					</REPEAT>
+				</ROW>
+			</COLUMN>
+			<!-- custom_out_param0..32 -->
+			<VAR id="MAX_N" value="$SCRIPT_OUT_PARAMS_COUNT$" />
+			<VAR id="P_N" value="0" />
+			<VAR id="C_N" value="2" />
+			<VAR id="ORIG_N" value="0" />
+			<VAR id="MAX_IN_BLOCK" formula="11" />
+			<!-- <VAR id="MAX_COLS" formula="ceil($MAX_N$/$MAX_IN_BLOCK$)" /> -->
+			<VAR id="MAX_COLS" formula="4" />
+			<REPEAT count="$MAX_COLS$" index_name="ind">
+				<UPDATE_MAX_COUNT max_in_block="$MAX_IN_BLOCK$" />
+				<COLUMN id="dsp_out_params_$C_N$" width="100%">
+					<REPEAT count="$MAX_COUNT$" index_name="ind">
+						<DIPA oid="dsp.output$ORIG_N$" vid="custom_out_param$P_N$" w2="140" op="1" />
+					</REPEAT>
+				</COLUMN>
+				<VAR id="C_N" formula="$C_N$+1" />
+			</REPEAT>
+		</MY_COLUMN>
+	</IF>
+	
+	<!-- TEMPLATE FOR PRIVATE DSP OUTPUT PARAMS -->
+	<VAR id="TX_COL" value="100000" />
+	<TEMPLATE id="DOPP" pid="__">
+		<PARAM_TEXT param_id="$pid$" text_color="#$TX_COL$">
+			<TOOLTIP text="$pid$" />
+		</PARAM_TEXT>
+		<VAR id="TX_COL" formula="($TX_COL$ == 100000)*100055 + ($TX_COL$ != 100000)*100000" />
+	</TEMPLATE>
+	<IF condition="$SHOW_PRIVATE_OUTPUT_PARAMS$">
+		<VAR id="MAX_N" value="$PLUGIN_PRIVATE_OUTPUT_PARAMS_COUNT$" />
+		<MY_COLUMN name="DSP private output params ($MAX_N$)" bid="dsp_params_private_output" expand="0">
+			<VAR id="P_N" value="0" />
+			<VAR id="ROW_N" value="0" />
+			<VAR id="MAX_IN_ROW_DEF" formula="16" />
+			<VAR id="ROWS_COUNT" formula="ceil($MAX_N$/$MAX_IN_ROW_DEF$) + 7" />
+			<COLUMN width="100%">
+				<REPEAT count="$ROWS_COUNT$">
+					<VAR id="ROW_N" formula="$ROW_N$+1" />
+					<VAR id="MAX_IN_ROW" formula="$MAX_IN_ROW_DEF$*($ROW_N$ &lt; 18) + 8*($ROW_N$ >= 18)" />
+					<ROW width="100%" font_size="9">
+						<UPDATE_MAX_COUNT max_in_block="$MAX_IN_ROW$" />
+						<REPEAT count="$MAX_COUNT$" index_name="ind">
+							<DOPP pid="dsp.private_output$P_N$" />
+							<VAR id="P_N" formula="$P_N$+1" />
+						</REPEAT>
+					</ROW>
+				</REPEAT>
+			</COLUMN>
+		</MY_COLUMN>
+	</IF>
+
+	<!-- TEMPLATE FOR INPUT STRINGS -->
+	<TEMPLATE id="DIS" pid="" w="120" vf=".0">
+		<TEXT_EDIT_BOX string_id="$pid$" width="$w$" text_color="#$TX_COL$">
+			<TOOLTIP text="$pid$" />
+		</TEXT_EDIT_BOX>
+		<VAR id="TX_COL" formula="($TX_COL$ == 100000)*100055 + ($TX_COL$ != 100000)*100000" />
+	</TEMPLATE>
+	<IF condition="$SHOW_INPUT_STRINGS$">
+		<MY_COLUMN name="DSP input strings ($PLUGIN_INPUT_STRINGS_COUNT$)" bid="dsp_input_strings" expand="0">
+			<VAR id="P_N" value="0" />
+			<DIS pid="dsp.input_string$P_N$" w="100%" />
+			<VAR id="P_N" formula="$P_N$+1" />
+
+			<COLUMN width="100%">
+				<VAR id="BW_PART" formula="$BASIC_WIDTH$/4.3" />
+				<REPEAT count="4">
+					<ROW width="100%" font_size="9">
+						<REPEAT count="4" index_name="ind">
+							<DIS pid="dsp.input_string$P_N$" w="$BW_PART$" />
+							<VAR id="P_N" formula="$P_N$+1" />
+						</REPEAT>
+					</ROW>
+				</REPEAT>
+
+				<VAR id="BW_PART" formula="$BASIC_WIDTH$/4.2" />
+				<ROW width="100%" font_size="9">
+					<REPEAT count="$PLUGIN_INPUT_STRINGS_COUNT$ - $P_N$" index_name="ind">
+						<DIS pid="dsp.input_string$P_N$" w="$BW_PART$" />
+						<VAR id="P_N" formula="$P_N$+1" />
+					</REPEAT>
+				</ROW>
+			</COLUMN>
+		</MY_COLUMN>
+	</IF>
+
+	<!-- TEMPLATE FOR OUTPUT STRINGS -->
+	<TEMPLATE id="DOS" pid="" w="50" vf=".0">
+		<TEXT string_id="$pid$" text_color="#$TX_COL$">
+			<TOOLTIP text="$pid$" />
+		</TEXT>
+		<VAR id="TX_COL" formula="($TX_COL$ == 100000)*100055 + ($TX_COL$ != 100000)*100000" />
+	</TEMPLATE>
+	<IF condition="$SHOW_OUTPUT_STRINGS$">
+		<MY_COLUMN name="DSP output strings ($PLUGIN_OUTPUT_STRINGS_COUNT$)" bid="dsp_output_strings" expand="0">
+			<VAR id="P_N" value="0" />
+			<VAR id="MAX_N" value="$PLUGIN_OUTPUT_STRINGS_COUNT$" />
+			<COLUMN width="100%">
+				<ROW width="100%" font_size="9">
+					<REPEAT count="3" index_name="ind">
+						<DOS pid="dsp.output_string$P_N$" />
+						<VAR id="P_N" formula="$P_N$+1" />
+					</REPEAT>
+				</ROW>
+
+				<REPEAT count="3" index_name="ind2">
+					<ROW width="100%" font_size="9">
+						<UPDATE_MAX_COUNT max_in_block="2" />
+						<REPEAT count="$MAX_COUNT$" index_name="ind">
+							<DOS pid="dsp.output_string$P_N$" />
+							<VAR id="P_N" formula="$P_N$+1" />
+						</REPEAT>
+					</ROW>
+				</REPEAT>
+
+				<REPEAT count="14">
+					<ROW width="100%" font_size="9">
+						<UPDATE_MAX_COUNT max_in_block="26" />
+						<REPEAT count="$MAX_COUNT$" index_name="ind">
+							<DOS pid="dsp.output_string$P_N$" />
+							<VAR id="P_N" formula="$P_N$+1" />
+						</REPEAT>
+					</ROW>
+				</REPEAT>
+			</COLUMN>
+		</MY_COLUMN>
+	</IF>
+
+	<!-- list of actions -->
+	<IF condition="$SHOW_ACTIONS$">
+		<STRING id="last_action" default="" />
+		<!-- template for action button -->
+		<TEMPLATE id="ACT_BUTTON" action="---">
+			<LAYER_STACK h_margin="3" v_margin="3">
+				<DBG_SVG_BG color="#FFFFFF" />
+				<CELL margin="6"><TEXT value="$action$" /></CELL>
+				<ACTION id="wrap_$action$" type="Script" script="last_action=&quot;$action$&quot;; $action$(); " requires="$action$;last_action" />
+				<INVISIBLE_ACTION_BUTTON width="100%" height="100%" action="wrap_$action$" cursor="system::hand" />
+			</LAYER_STACK>
+		</TEMPLATE>
+		<MY_COLUMN name="Built-in actions" bid="built_in_actions" expand="0">
+			<ROW>
+				<REPEAT index_list="OpenMenu;OpenPresetsMenu;DisplayAbout;OpenManual;Undo;Redo">
+					<ACT_BUTTON action="$index$" />
+				</REPEAT>
+			</ROW>
+			<ROW>
+				<REPEAT index_list="LoadPreset;SavePreset;SaveAsDefaultPreset;NextPreset;PreviousPreset">
+					<ACT_BUTTON action="$index$" />
+				</REPEAT>
+			</ROW>
+			<ROW>
+				<IF condition="$SCRIPT_PARAMS_COUNT$>0">
+					<ACT_BUTTON action="Show_dsp.input0_ControlSetup" />
+				</IF>
+				<IF condition="$SCRIPT_OUT_PARAMS_COUNT$>0">
+					<ACT_BUTTON action="Show_dsp.output0_ControlSetup" />
+				</IF>
+			</ROW>
+			<LAYER_STACK v_margin="4">
+				<DBG_SVG_BG color="#AAAAFF" opacity="0.3" />
+				<ROW v_margin="6" h_margin="6">
+					<TEXT value="Last action name: " />
+					<TEXT_EDIT_BOX string_id="last_action" width="200">
+						<TOOLTIP text="Last action name" />
+					</TEXT_EDIT_BOX>
+				</ROW>
+			</LAYER_STACK>
+		</MY_COLUMN>
+	</IF>
+
+	<!-- list of action types -->
+	<IF condition="$SHOW_ACTION_TYPES$">
+		<!-- some params for demo actions to work with -->
+		<STRING id="last_action_type" default="" />
+		<STRING id="demo_string_1" default="demo_string_1" />
+		<STRING id="demo_string_2" default="demo_string_2" />
+		<STRING id="demo_string_3" default="demo_string_3" />
+		<PARAM id="demo_param_1" min="-1" max="100000" />
+		<PARAM id="demo_param_2" />
+		<PARAM id="demo_param_3" />
+
+		<!-- template for action type button -->
+		<TEMPLATE id="ACT_TYPE_BUTTON" action_type="---" w="180">
+			<ACTION id="wrap_demo_$action_type$" type="Script" script="demo_$action_type$(); last_action_type=&quot;$action_type$&quot;;" requires="demo_$action_type$;last_action_type" />
+			<ROW h_margin="5" v_margin="3">
+				<SYSTEM_ACTION_BUTTON action_id="demo_$action_type$" width="$w$">
+					<INVISIBLE_ACTION_BUTTON action_id="wrap_demo_$action_type$" width="100%" height="100%" cursor="system::hand">
+						<TOOLTIP text="$action_type$" />
+					</INVISIBLE_ACTION_BUTTON>
+				</SYSTEM_ACTION_BUTTON>
+			</ROW>
+		</TEMPLATE>
+		<MY_COLUMN name="Built-in action types" bid="built_in_action_types" expand="0">
+			<ROW>
+				<ACTION type="OpenUrl"
+						id="demo_OpenUrl" 
+						url="$_FILE_$"
+						_url_string_id="can_use_string_id_instead"
+						application="notepad.exe" 
+						_application_string_id="can_use_string_id_instead"
+						name="Open url or file"
+				/>
+
+				<ACTION type="OpenDirectory"
+						id="demo_OpenDirectory" 
+						url="$PLUGIN_DATA_PATH$"
+						_url_string_id="can_use_string_id_instead_of_static_url"
+						name="Open directory"
+				/>
+
+				<ACTION type="DisplayMessageBox" 
+						id="demo_DisplayMessageBox"
+						title="Hello there" 
+						message="This is a message" 
+						style="info" 
+						timeout="-1" 
+						button0="Yes" 
+						button1="No" 
+						button2="Maybe" 
+						button3="Close" 
+						close_button="Close" 
+						result_param_id="demo_param_1" 
+						_button0_action_id="OpenMenu" 
+						_button1_action_id="OpenMenu"
+						_button2_action_id="OpenMenu"
+						name="Message Box"
+				/>
+
+				<ACTION type="Script" 
+						id="demo_Script" 
+						requires="demo_string_1"
+						script="string s = &quot;Script executed &quot;; double a=pow(2, 17); demo_string_1 = s+a;" 
+						name="Run a simple script"
+				/>
+
+				<ACT_TYPE_BUTTON action_type="OpenUrl" w="100" />
+				<ACT_TYPE_BUTTON action_type="OpenDirectory" w="100" />
+				<ACT_TYPE_BUTTON action_type="DisplayMessageBox" w="100" />
+				<ACT_TYPE_BUTTON action_type="Script" w="130" />
+			</ROW>
+			<ROW>
+				<ACTION type="DisplayFileOpenDialog"
+						id="demo_DisplayFileOpenDialog" 
+						title="Select skin *.xml file"
+						file_path_string_id="demo_string_1"
+						file_types="*.xml"	
+						open_bundles="false"
+						default_path="$PLUGIN_DATA_PATH$/Skins"
+						name="Open file (dialog)"
+				/>
+				<ACTION type="DisplayFileSaveDialog"
+						id="demo_DisplayFileSaveDialog" 
+						title="Choose file to save"
+						file_path_string_id="demo_string_1"
+						file_types="*.txt"	
+						open_bundles="true"
+						default_path="$PLUGIN_DATA_PATH$/Skins"
+						name="Save file (dialog)"
+				/>
+				<ACTION type="DisplayFolderSelectDialog"
+						id="demo_DisplayFolderSelectDialog"
+						file_path_string_id="demo_string_1"
+						root_path="C:\Users\"
+						name="Select folder (dialog)"
+				/>
+				<ACTION type="DisplayPlugNScriptMenu" 
+						id="demo_DisplayPlugNScriptMenu"
+						script_file_name_string_id="demo_string_1"
+						name="Script selection menu"
+				/>
+				<ACT_TYPE_BUTTON action_type="DisplayFileOpenDialog" w="120" />
+				<ACT_TYPE_BUTTON action_type="DisplayFileSaveDialog" w="120" />
+				<ACT_TYPE_BUTTON action_type="DisplayFolderSelectDialog" w="120" />
+				<IF condition="$SCRIPT_EDIT_MODE$">
+					<ACT_TYPE_BUTTON action_type="DisplayPlugNScriptMenu" w="140" />
+				</IF>
+			</ROW>
+
+			<ROW>
+				<!-- required for export-related actions -->
+				<GROUP id="export_config" 
+					object_ids="demo_string_1;demo_string_2;demo_string_3;demo_string_1;demo_string_2;demo_string_3;demo_string_1;demo_string_2;demo_string_3;demo_string_1;demo_string_2" 
+				    object_aliases="plugin_id;plugin_guid;plugin_name;plugin_manufacturer;plugin_manufacturer_id;dest_path;use_generic_params;use_generic_skin;plugin_plugin_type;io_config;io_config_name"/>
+
+				<ACTION type="GeneratePlugNScriptGUID" 
+						id="demo_GeneratePlugNScriptGUID" 
+						string_id="demo_string_3" 
+						name="Generate GUID"
+				/>
+				<ACTION type="DisplayObjectLoadDialog"
+						id="demo_DisplayObjectLoadDialog"  
+						object_id="export_config" 
+						file_types="*.pnscfg" 
+						default_path="$PLUGIN_USER_DOCUMENTS_PATH$/Configs" 
+						applicative_type="PluginConfig" 
+						name="Load config..." 
+				/>
+				<ACTION type="DisplayObjectSaveDialog" 
+						id="demo_DisplayObjectSaveDialog" 
+						object_id="export_config" 
+						file_types="*.pnscfg" 
+						default_path="$PLUGIN_USER_DOCUMENTS_PATH$/Configs" 
+						applicative_type="PluginConfig"
+						name="Save config as..." 
+				/>
+				<ACTION type="ExportPlugNScriptPlugin" 
+						id="demo_ExportPlugNScriptPlugin" 
+				        plugin_id_string_id="demo_string_3"
+				        plugin_guid_string_id="demo_string_1" 
+				        plugin_name_string_id="demo_string_2" 
+				        plugin_manufacturer_string_id="demo_string_3"
+				        plugin_manufacturer_id_string_id="demo_string_1"
+				        dsp_file_string_id="demo_string_2" 
+				        dest_folder_string_id="demo_string_3"
+				        use_generic_params_param_id="demo_param_2" 
+				        use_generic_skin_param_id="demo_param_3" 
+				        plugin_type_param_id="demo_param_1"
+				        enable_meters_param_id="demo_param_2" 
+				        result_param_id="demo_param_3"
+				        io_config_path_string_id="demo_string_1" 
+				        io_config_root_path="$PLUGIN_DATA_PATH$/Resources/Settings/ioconfig"
+				        log_path_string_id="demo_string_3" 
+				        temp_path_string_id="demo_string_2"
+				        name="Build plugin!"
+				/>
+				<IF condition="$SCRIPT_EDIT_MODE$">
+					<ACT_TYPE_BUTTON action_type="GeneratePlugNScriptGUID" w="120" />
+				</IF>
+				<ACT_TYPE_BUTTON action_type="DisplayObjectLoadDialog" w="130" />
+				<ACT_TYPE_BUTTON action_type="DisplayObjectSaveDialog" w="130" />
+				<IF condition="$SCRIPT_EDIT_MODE$">
+					<ACT_TYPE_BUTTON action_type="ExportPlugNScriptPlugin" w="100" />
+				</IF>
+			</ROW>
+
+			<ROW>
+				<STRING id="demo_string_path" default="$_DIR_$/test_SaveObject.txt" />
+				<ACTION type="CopyObject" 
+						id="demo_CopyObject"
+						object_id="export_config" 
+						applicative_type="" 
+						copy_context=""
+						name="Copy Object"
+				/>
+				<ACTION type="PasteObject" 
+						id="demo_PasteObject"
+						object_id="export_config" 
+						applicative_type="" 
+						paste_context=""
+						name="Paste Object"
+				/>
+				<ACTION type="SaveObject" 
+						id="demo_SaveObject"
+						object_id="export_config" 
+						applicative_type="PluginConfig"
+						file_path_string_id="demo_string_path"
+						root_path="" 
+						save_context=""
+						name="Save Object"
+				/>
+				<ACTION type="LoadObject" 
+						id="demo_LoadObject"
+						object_id="export_config" 
+						applicative_type="PluginConfig" 
+						file_path_string_id="demo_string_path"
+						root_path="" 
+						load_context=""
+						name="Load Object"
+				/>
+				<ACT_TYPE_BUTTON action_type="CopyObject" w="100" />
+				<ACT_TYPE_BUTTON action_type="PasteObject" w="100" />
+				<ACT_TYPE_BUTTON action_type="SaveObject" w="100" />
+				<ACT_TYPE_BUTTON action_type="LoadObject" w="100" />
+			</ROW>
+			
+			<LAYER_STACK width="100%" v_margin="3">
+				<DBG_SVG_BG color="#AAFFAA" opacity="0.5" />
+				<COLUMN width="95%" v_margin="7">
+					<ROW width="100%" internal_h_align="left" v_margin="4" spacing="5">
+						<TEXT value="Demo vars:" />
+						<PARAM_TEXT param_id="demo_param_1" exposed="true"><TOOLTIP text="demo_param_1" /></PARAM_TEXT>
+						<PARAM_TEXT param_id="demo_param_2"><TOOLTIP text="demo_param_2" /></PARAM_TEXT>
+						<PARAM_TEXT param_id="demo_param_3"><TOOLTIP text="demo_param_3" /></PARAM_TEXT>
+						<TEXT_EDIT_BOX string_id="demo_string_1" width="36%">
+							<TOOLTIP text="demo_string_1" />
+						</TEXT_EDIT_BOX>
+						<TEXT_EDIT_BOX string_id="demo_string_2" width="32%">
+							<TOOLTIP text="demo_string_2" />
+						</TEXT_EDIT_BOX>
+						
+					</ROW>
+					<ROW width="100%" v_margin="4" spacing="5">
+						<TEXT_EDIT_BOX string_id="demo_string_3" width="100%">
+							<TOOLTIP text="demo_string_3" />
+						</TEXT_EDIT_BOX>
+					</ROW>
+				</COLUMN>
+			</LAYER_STACK>
+			<LAYER_STACK v_margin="4">
+				<DBG_SVG_BG color="#AAAAFF" opacity="0.3" />
+				<ROW v_margin="6" h_margin="6">
+					<TEXT value="Last action type: " />
+					<TEXT_EDIT_BOX string_id="last_action_type" width="200">
+						<TOOLTIP text="Last action type" />
+					</TEXT_EDIT_BOX>
+				</ROW>
+			</LAYER_STACK>
+
+		</MY_COLUMN>
+	</IF>
+
+	</COLUMN>
+	
+	<!-- Expand / Collapse debug (little vertical line) -->
+	<COLUMN internal_v_align="center" height="100%" h_align="left">
+		<LAYER_STACK width="10" height="60" internal_v_align="center" id="expClpHandler">
+			<svg viewBox='0 0 18 200' width="10" height="40" opacity="0.5"><polygon points="5,5 15,5 15,195 5,195 " fill="#777777" /></svg>
+			<ACTION id="expandCollapseDebug" requires="debug_cell.*;expClpHandler.*" preprocess="true" type="Script" script="float inverse = abs(debug_cell.display - 1); debug_cell.display=inverse; expClpHandler.h_offset=2 + (inverse*-2)" />
+			<INVISIBLE_ACTION_BUTTON action="expandCollapseDebug" width="100%" height="100%" cursor="system::hand">
+			  <TOOLTIP text="Expand / Collapse Debug"/>
+			</INVISIBLE_ACTION_BUTTON>
+		</LAYER_STACK>
+	</COLUMN>
+
+	<!-- Include subskin (.kuiml file) -->
+	<INCLUDE_ONCE file="LetiMix/subskin-loader.inc" />
+
+</ROW>
+
+<!-- Include log line -->
+<INCLUDE_ONCE file="LetiMix/tail-log.inc" />
+
+</SKIN>

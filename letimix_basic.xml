@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<SKIN author="Ilya Orlov" name="LetiMix Silver Skin" font_size_mode="character" refresh_priority="normal" refresh_time_ms="20" background_color="#AAAAAA" right_click_action="OpenMenu" show_warnings="true" language_version="2.5" >
+
+  <!-- include defines and mappings -->
+  <INCLUDE_ONCE file="LetiMix/common.inc"/>
+
+  <!-- include default Plug-n-Script graphics (NOT REQUIRED) -->
+  <INCLUDE_ONCE file="$PLUGIN_DATA_PATH$/Skins/Modern-Theme/theme.inc"/>
+  <INCLUDE_ONCE file="$PLUGIN_DATA_PATH$/Skins/Controls/Knobs/knobs.inc"/>
+  <INCLUDE_ONCE file="$PLUGIN_DATA_PATH$/Skins/Controls/Groups/groups.inc"/>
+  <INCLUDE_ONCE file="$PLUGIN_DATA_PATH$/Skins/Controls/Meters/meters.inc"/>
+  <INCLUDE_ONCE file="$PLUGIN_DATA_PATH$/Skins/Controls/Other/other.inc"/>
+
+  <!-- ACTUAL MARKUP START -->
+  <COLUMN min_height="20" min_width="400">
+
+    <!-- Remember current skin filename (for top menu) -->
+    <VAR id="_SKIN_FILENAME_" value="$_FILE_$" />
+    <!-- Include top menu -->
+    <INCLUDE_ONCE file="LetiMix/head-toolbar.inc" />
+
+    <!-- Include subskin (.kuiml file) -->
+    <INCLUDE_ONCE file="LetiMix/subskin-loader.inc" />
+
+    <!-- Include log line -->
+    <INCLUDE_ONCE file="LetiMix/tail-log.inc" />
+
+  </COLUMN>
+
+</SKIN>

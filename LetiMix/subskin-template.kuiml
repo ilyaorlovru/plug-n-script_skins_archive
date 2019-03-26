@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<SKIN v_margin="3">
+
+<LAYER_STACK v_margin="5" v_offset="-4">
+	<TEXT value="This script has no .kuiml subskin" />
+</LAYER_STACK>
+
+<TEMPLATE id="SVG_BG" color="#EEEEEE">
+	<svg width="100%" height="100%" viewBox='0 0 100 10' opacity="0.7">
+	  <rect fill="$color$" width="100%" height="100%" />
+	</svg>
+</TEMPLATE>
+<ROW spacing="20" internal_v_align="top" h_margin="7">
+
+	<REPEAT count="#in_params_count# > 0" index_name="__none">
+		<LAYER_STACK v_align="top" internal_v_align="top">
+			<SVG_BG />
+			<COLUMN spacing="0" margin="10">
+				<TEXT value="Input params:" />
+				<TABLE margin="7" h_spacing="4" v_spacing="4" v_align="top" internal_v_align="top">
+				<REPEAT count="#in_params_count#">
+					<TABLE_ROW >
+						<PARAM_TEXT param_id="custom_param$index$" content="{name}:" h_align="right" />
+						<PARAM_TEXT_CONTROL param_id="custom_param$index$" cursor="system::size_v"   font_weight="bold" h_align="left"/>
+					</TABLE_ROW>
+				</REPEAT>
+				</TABLE>
+			</COLUMN>
+		</LAYER_STACK>
+	</REPEAT>
+
+	<REPEAT count="#out_params_count# > 0" index_name="__none">
+		<LAYER_STACK v_align="top" internal_v_align="top">
+			<SVG_BG color="#FFFFFF" />
+			<COLUMN spacing="0" margin="10">
+				<TEXT value="Output params:" />
+				<TABLE margin="7" h_spacing="4" v_spacing="4" v_align="top" internal_v_align="top">
+				<REPEAT count="#out_params_count#">
+					<TABLE_ROW>
+						<PARAM_TEXT param_id="custom_out_param$index$" content="{name}:" h_align="right" />
+						<PARAM_TEXT param_id="custom_out_param$index$" font_weight="bold" h_align="left"/>
+					</TABLE_ROW>
+				</REPEAT>
+				</TABLE>
+			</COLUMN>
+		</LAYER_STACK>
+	</REPEAT>
+</ROW>
+
+</SKIN>
